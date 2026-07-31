@@ -3,6 +3,12 @@
 *.class
 *.jar
 
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
 # Benchmark output
 results/**
 !results/.gitkeep
