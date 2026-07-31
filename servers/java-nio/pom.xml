@@ -11,7 +11,7 @@
     <description>Dependency-free Java NIO HTTP/1.1 benchmark server.</description>
 
     <properties>
-        <maven.compiler.release>26</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
