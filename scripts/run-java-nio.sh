@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVER_DIR="$ROOT_DIR/servers/java-nio"
 HOST="${HTTP_HOST:-127.0.0.1}"
-PORT="${HTTP_PORT:-8080}"
+PORT="${HTTP_PORT:-8888}"
 BACKLOG="${HTTP_BACKLOG:-1024}"
 
 command -v java >/dev/null || {
