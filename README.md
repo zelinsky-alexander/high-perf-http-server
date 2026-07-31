@@ -10,15 +10,47 @@ Cross-language research and reproducible performance benchmarking of high-perfor
 - HTTP/1.1 over loopback
 - No TLS, compression, reverse proxy, database, or access logging in baseline tests
 
-## First server
+## Current baseline servers
 
-The first implementation is a dependency-free Java NIO baseline targeting Java 26:
+### Java NIO
 
 ```text
 servers/java-nio
 ```
 
-It deliberately uses the JDK networking APIs directly. Later Java implementations can add Netty or other frameworks while preserving the same endpoint and benchmark contract.
+Dependency-free Java NIO implementation targeting Java 21. It uses the JDK networking APIs directly so later Netty and virtual-thread implementations can be measured separately.
+
+Run:
+
+```bash
+bash scripts/run-java-nio.sh
+```
+
+Benchmark:
+
+```bash
+bash scripts/benchmark-java-nio.sh
+```
+
+### Python asyncio
+
+```text
+servers/python-asyncio
+```
+
+Dependency-free CPython implementation using the standard-library `asyncio` streams API. It targets Python 3.12+, which is the Ubuntu 24.04 baseline. Uvicorn, uvloop, and httptools will be evaluated as separate framework/runtime variants.
+
+Run:
+
+```bash
+bash scripts/run-python-asyncio.sh
+```
+
+Benchmark:
+
+```bash
+bash scripts/benchmark-python-asyncio.sh
+```
 
 ## Baseline endpoints
 
@@ -27,18 +59,13 @@ It deliberately uses the JDK networking APIs directly. Later Java implementation
 
 Both endpoints support HTTP/1.1 keep-alive. Other methods return `405`; unknown paths return `404`.
 
-## Run
+## Port selection
+
+All run scripts use port `8080` unless overridden:
 
 ```bash
-cd servers/java-nio
-mvn -q clean package
-java -jar target/java-nio-server.jar --host 127.0.0.1 --port 8080
-```
-
-Or from the repository root:
-
-```bash
-./scripts/run-java-nio.sh
+HTTP_PORT=8888 bash scripts/run-java-nio.sh
+HTTP_PORT=8888 bash scripts/run-python-asyncio.sh
 ```
 
 Validate:
@@ -48,7 +75,7 @@ curl -i http://127.0.0.1:8080/health
 curl -i http://127.0.0.1:8080/plaintext
 ```
 
-## Benchmark
+## Benchmark tooling
 
 Install `wrk` inside Ubuntu:
 
@@ -57,13 +84,17 @@ sudo apt update
 sudo apt install -y wrk
 ```
 
-Run the initial benchmark:
+Example controlled run:
 
 ```bash
-./scripts/benchmark-java-nio.sh
+bash scripts/benchmark-python-asyncio.sh \
+  -c 128 \
+  -t 2 \
+  -d 60s \
+  http://127.0.0.1:8080/plaintext
 ```
 
-The script performs a warm-up and a small concurrency sweep. Raw output is written under `results/`.
+Raw output is written under `results/<implementation>/<timestamp>/`.
 
 ## Benchmarking principles
 
@@ -73,9 +104,10 @@ The script performs a warm-up and a small concurrency sweep. Raw output is writt
 - Warm up before measurement.
 - Repeat every scenario and compare medians.
 - Record runtime, compiler, OS, CPU, worker count, command line, CPU use, memory, throughput, latency, and errors.
+- Compare single-executor and multi-core configurations separately.
 - Treat WSL2 results as comparative local results, not universal production capacity.
 
-## Planned structure
+## Repository structure
 
 ```text
 specification/       Shared endpoint and measurement contracts
