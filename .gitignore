@@ -1,0 +1,21 @@
+# Java
+**/target/
+*.class
+*.jar
+
+# Benchmark output
+results/**
+!results/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and runtime files
+*.log
+*.pid
