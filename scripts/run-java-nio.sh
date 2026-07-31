@@ -17,8 +17,8 @@ command -v mvn >/dev/null || {
 }
 
 JAVA_MAJOR="$(java -version 2>&1 | awk -F'[\".]' '/version/ {print $2; exit}')"
-if [[ -z "$JAVA_MAJOR" || "$JAVA_MAJOR" -lt 26 ]]; then
-  echo "Java 26 or newer is required; detected: $(java -version 2>&1 | head -n1)" >&2
+if [[ -z "$JAVA_MAJOR" || "$JAVA_MAJOR" -lt 21 ]]; then
+  echo "Java 21 or newer is required; detected: $(java -version 2>&1 | head -n1)" >&2
   exit 1
 fi
 

@@ -13,7 +13,7 @@ import java.util.Deque;
 import java.util.Iterator;
 
 public final class Main {
-    private static final int DEFAULT_PORT = 8080;
+    private static final int DEFAULT_PORT = 8888;
     private static final int READ_BUFFER_SIZE = 16 * 1024;
     private static final int MAX_EVENTS_PER_SELECT = 1_024;
 
