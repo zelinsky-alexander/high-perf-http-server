@@ -23,11 +23,13 @@ if [[ -z "$GO_MAJOR" || -z "$GO_MINOR" ]] || ((GO_MAJOR < 1 || (GO_MAJOR == 1 &&
 fi
 
 mkdir -p "$SERVER_DIR/bin"
-
-go build \
-  -trimpath \
-  -o "$SERVER_DIR/bin/go-nethttp" \
-  "$SERVER_DIR"
+(
+  cd "$SERVER_DIR"
+  go build \
+    -trimpath \
+    -o bin/go-nethttp \
+    .
+)
 
 if [[ -n "$GO_MAX_PROCS" ]]; then
   export GOMAXPROCS="$GO_MAX_PROCS"
