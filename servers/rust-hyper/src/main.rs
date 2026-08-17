@@ -53,11 +53,7 @@ async fn run(config: Config) -> Result<(), Box<dyn Error>> {
                         .max_headers(100)
                         .writev(true);
 
-                    if let Err(error) = builder.serve_connection(io, service).await {
-                        if !error.is_incomplete_message() {
-                            eprintln!("connection error: {error}");
-                        }
-                    }
+                    let _ = builder.serve_connection(io, service).await;
                 });
             }
             signal_result = tokio::signal::ctrl_c() => {
