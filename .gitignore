@@ -17,6 +17,9 @@ CMakeCache.txt
 cmake_install.cmake
 compile_commands.json
 
+# Go
+servers/go-nethttp/bin/
+
 # Benchmark output
 results/**
 !results/.gitkeep
