@@ -1,6 +1,7 @@
 use std::convert::Infallible;
 use std::env;
 use std::error::Error;
+use std::io::{self, ErrorKind};
 use std::net::{IpAddr, SocketAddr};
 
 use http_body_util::Full;
@@ -136,16 +137,18 @@ impl Config {
                 "--backlog" => {
                     backlog = require_value(&mut arguments, "--backlog")?.parse()?;
                     if backlog == 0 {
-                        return Err("backlog must be positive".into());
+                        return Err(invalid_input("backlog must be positive").into());
                     }
                 }
                 "--workers" => {
                     workers = require_value(&mut arguments, "--workers")?.parse()?;
                     if workers == 0 {
-                        return Err("workers must be positive".into());
+                        return Err(invalid_input("workers must be positive").into());
                     }
                 }
-                _ => return Err(format!("unknown argument: {argument}").into()),
+                _ => {
+                    return Err(invalid_input(format!("unknown argument: {argument}")).into());
+                }
             }
         }
 
@@ -164,5 +167,9 @@ where
 {
     arguments
         .next()
-        .ok_or_else(|| format!("missing value for {option}").into())
+        .ok_or_else(|| invalid_input(format!("missing value for {option}")).into())
+}
+
+fn invalid_input(message: impl Into<String>) -> io::Error {
+    io::Error::new(ErrorKind::InvalidInput, message.into())
 }
