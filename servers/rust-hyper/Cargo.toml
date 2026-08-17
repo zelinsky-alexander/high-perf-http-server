@@ -1,0 +1,12 @@
+[package]
+name = "rust-hyper-server"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Minimal high-performance HTTP/1.1 benchmark server using Tokio and Hyper."
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "signal"] }
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
