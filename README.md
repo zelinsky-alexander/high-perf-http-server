@@ -92,6 +92,28 @@ Benchmark:
 bash scripts/benchmark-go-nethttp.sh
 ```
 
+### Rust Hyper
+
+```text
+servers/rust-hyper
+```
+
+Rust HTTP/1.1 implementation using Tokio for the asynchronous runtime and Hyper for the low-level HTTP server. Higher-level Rust frameworks such as Axum can be benchmarked later as separate variants.
+
+Run:
+
+```bash
+bash scripts/run-rust-hyper.sh
+```
+
+Benchmark:
+
+```bash
+bash scripts/benchmark-rust-hyper.sh
+```
+
+`RUST_WORKERS` controls Tokio runtime worker threads; the baseline defaults to one worker so single-executor and multi-core experiments can be kept separate.
+
 ## Baseline endpoints
 
 - `GET /health` returns `ok\n`
@@ -108,6 +130,7 @@ HTTP_PORT=8888 bash scripts/run-java-nio.sh
 HTTP_PORT=8888 bash scripts/run-python-asyncio.sh
 HTTP_PORT=8888 bash scripts/run-cpp20.sh
 HTTP_PORT=8888 bash scripts/run-go-nethttp.sh
+HTTP_PORT=8888 RUST_WORKERS=1 bash scripts/run-rust-hyper.sh
 ```
 
 Validate:
@@ -129,7 +152,7 @@ sudo apt install -y wrk
 Example controlled run:
 
 ```bash
-bash scripts/benchmark-go-nethttp.sh \
+bash scripts/benchmark-rust-hyper.sh \
   -c 128 \
   -t 4 \
   -d 60s \
