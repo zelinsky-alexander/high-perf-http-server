@@ -1,0 +1,202 @@
+name: Build and Smoke Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  java:
+    name: Java 21 NIO
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build
+        run: mvn -B -f servers/java-nio/pom.xml clean package
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -jar servers/java-nio/target/java-nio-server.jar \
+            --host 127.0.0.1 \
+            --port 18080 \
+            --backlog 128 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          for _ in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl -fsS http://127.0.0.1:18080/health)" = "ok"
+          test "$(curl -fsS http://127.0.0.1:18080/plaintext)" = "Hello, World!"
+
+  python:
+    name: Python 3.12 asyncio
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Syntax check
+        run: python -m py_compile servers/python-asyncio/server.py
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python servers/python-asyncio/server.py \
+            --host 127.0.0.1 \
+            --port 18080 \
+            --backlog 128 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          for _ in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl -fsS http://127.0.0.1:18080/health)" = "ok"
+          test "$(curl -fsS http://127.0.0.1:18080/plaintext)" = "Hello, World!"
+
+  cpp20:
+    name: C++20
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure
+        run: |
+          cmake \
+            -S servers/cpp20 \
+            -B servers/cpp20/build-ci \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DHTTPBENCH_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build servers/cpp20/build-ci --parallel
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          servers/cpp20/build-ci/cpp20-http-server \
+            --host 127.0.0.1 \
+            --port 18080 \
+            --backlog 128 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          for _ in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl -fsS http://127.0.0.1:18080/health)" = "ok"
+          test "$(curl -fsS http://127.0.0.1:18080/plaintext)" = "Hello, World!"
+
+  go:
+    name: Go net/http
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: servers/go-nethttp/go.mod
+          cache-dependency-path: servers/go-nethttp/go.mod
+
+      - name: Build
+        working-directory: servers/go-nethttp
+        run: go build -trimpath -o bin/go-nethttp .
+
+      - name: Test
+        working-directory: servers/go-nethttp
+        run: go test ./...
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          servers/go-nethttp/bin/go-nethttp \
+            --host 127.0.0.1 \
+            --port 18080 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          for _ in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl -fsS http://127.0.0.1:18080/health)" = "ok"
+          test "$(curl -fsS http://127.0.0.1:18080/plaintext)" = "Hello, World!"
+
+  rust:
+    name: Rust Hyper/Tokio
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Toolchain info
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Build
+        working-directory: servers/rust-hyper
+        run: cargo build --release
+
+      - name: Test
+        working-directory: servers/rust-hyper
+        run: cargo test --all-targets
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          servers/rust-hyper/target/release/rust-hyper-server \
+            --host 127.0.0.1 \
+            --port 18080 \
+            --backlog 128 \
+            --workers 1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          for _ in {1..40}; do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          test "$(curl -fsS http://127.0.0.1:18080/health)" = "ok"
+          test "$(curl -fsS http://127.0.0.1:18080/plaintext)" = "Hello, World!"
