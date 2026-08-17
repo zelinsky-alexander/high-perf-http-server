@@ -52,6 +52,46 @@ Benchmark:
 bash scripts/benchmark-python-asyncio.sh
 ```
 
+### C++20
+
+```text
+servers/cpp20
+```
+
+Dependency-free C++20 implementation with the HTTP/server core separated from the platform event loop. Linux uses an `epoll` backend, with a portable poll-style fallback for other supported platforms.
+
+Run:
+
+```bash
+bash scripts/run-cpp20.sh
+```
+
+Benchmark:
+
+```bash
+bash scripts/benchmark-cpp20.sh
+```
+
+### Go net/http
+
+```text
+servers/go-nethttp
+```
+
+Dependency-free Go implementation using the standard-library `net/http` stack directly. Third-party routers and frameworks are intentionally excluded from this baseline so they can be measured separately later.
+
+Run:
+
+```bash
+bash scripts/run-go-nethttp.sh
+```
+
+Benchmark:
+
+```bash
+bash scripts/benchmark-go-nethttp.sh
+```
+
 ## Baseline endpoints
 
 - `GET /health` returns `ok\n`
@@ -66,6 +106,8 @@ All run scripts use port `8080` unless overridden:
 ```bash
 HTTP_PORT=8888 bash scripts/run-java-nio.sh
 HTTP_PORT=8888 bash scripts/run-python-asyncio.sh
+HTTP_PORT=8888 bash scripts/run-cpp20.sh
+HTTP_PORT=8888 bash scripts/run-go-nethttp.sh
 ```
 
 Validate:
@@ -87,9 +129,9 @@ sudo apt install -y wrk
 Example controlled run:
 
 ```bash
-bash scripts/benchmark-python-asyncio.sh \
+bash scripts/benchmark-go-nethttp.sh \
   -c 128 \
-  -t 2 \
+  -t 4 \
   -d 60s \
   http://127.0.0.1:8080/plaintext
 ```
@@ -105,6 +147,7 @@ Raw output is written under `results/<implementation>/<timestamp>/`.
 - Repeat every scenario and compare medians.
 - Record runtime, compiler, OS, CPU, worker count, command line, CPU use, memory, throughput, latency, and errors.
 - Compare single-executor and multi-core configurations separately.
+- Record framework/runtime-added wire differences such as automatic response headers.
 - Treat WSL2 results as comparative local results, not universal production capacity.
 
 ## Repository structure
