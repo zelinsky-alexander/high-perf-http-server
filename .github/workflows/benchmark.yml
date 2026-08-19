@@ -83,7 +83,7 @@ jobs:
         working-directory: servers/rust-hyper
         run: cargo build --release
 
-      - name: Run comparative benchmark
+      - name: Run category 1 - single-executor benchmark
         env:
           BENCH_DURATION: 10s
           BENCH_WARMUP_DURATION: 5s
@@ -91,19 +91,43 @@ jobs:
           BENCH_REPETITIONS: '3'
           BENCH_CONNECTIONS: '32 128'
           BENCH_WRK_TIMEOUT: 10s
-          BENCH_RESULT_DIR: benchmark-results
+          BENCH_RESULT_DIR: benchmark-results/single-executor
         run: bash scripts/ci-compare-benchmarks.sh
 
-      - name: Publish comparison in job summary
+      - name: Run category 2 - multicore process-sharded benchmark
+        env:
+          BENCH_DURATION: 10s
+          BENCH_WARMUP_DURATION: 5s
+          BENCH_REPETITIONS: '3'
+          BENCH_CONNECTIONS: '32 128'
+          BENCH_WRK_TIMEOUT: 10s
+          BENCH_MAX_SHARDS: '4'
+          BENCH_RESULT_DIR: benchmark-results/multicore-process-sharded
+        run: bash scripts/ci-compare-multicore.sh
+
+      - name: Publish both comparisons in job summary
         if: always()
         run: |
-          if [[ -f benchmark-results/comparison.md ]]; then
-            cat benchmark-results/comparison.md >> "$GITHUB_STEP_SUMMARY"
+          echo "# Comparative HTTP benchmark" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f benchmark-results/single-executor/comparison.md ]]; then
+            cat benchmark-results/single-executor/comparison.md >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Benchmark report was not generated." >> "$GITHUB_STEP_SUMMARY"
+            echo "Single-executor report was not generated." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload benchmark report and raw output
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f benchmark-results/multicore-process-sharded/comparison.md ]]; then
+            cat benchmark-results/multicore-process-sharded/comparison.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Multicore/process-sharded report was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload benchmark reports and raw output
         if: always()
         uses: actions/upload-artifact@v4
         with:
