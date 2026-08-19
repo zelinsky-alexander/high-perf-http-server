@@ -161,6 +161,34 @@ bash scripts/benchmark-rust-hyper.sh \
 
 Raw output is written under `results/<implementation>/<timestamp>/`.
 
+## GitHub Actions comparative benchmark
+
+`.github/workflows/benchmark.yml` builds all five implementations and benchmarks them sequentially on one GitHub-hosted Ubuntu runner. Keeping the servers on the same runner reduces cross-machine noise when comparing implementations.
+
+The default CI comparison uses:
+
+- 2 `wrk` threads
+- 32 and 128 connections
+- 5-second warm-up per implementation
+- 10-second measured runs
+- 3 repetitions per connection level
+- median requests/second and median p99 latency
+- socket-error reporting
+
+Go is constrained with `GOMAXPROCS=1` and Rust uses one Tokio worker for the single-executor baseline. The workflow currently reports performance rather than enforcing absolute throughput thresholds.
+
+It runs on pushes to `main`, can be started manually with `workflow_dispatch`, and runs weekly on Monday. Results are shown in the GitHub job summary and uploaded for 30 days as an artifact containing:
+
+```text
+benchmark-results/
+├── comparison.md
+├── comparison.csv
+├── environment.txt
+└── raw/
+```
+
+GitHub-hosted runner results should be treated as relative CI comparisons, not authoritative hardware benchmarks. Stable longitudinal performance gates should eventually use a controlled self-hosted runner.
+
 ## Benchmarking principles
 
 - Run one server implementation at a time.
